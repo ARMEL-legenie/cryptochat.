@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0b0d1c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
+<title>CryptoChat – Messagerie sécurisée</title>
+<style>
+:root{--a:#7c5cff;--b:#22d3ee;--tx:#eef0ff;--mu:#9aa3c7;--bd:rgba(255,255,255,.12);--gl:rgba(255,255,255,.06);--er:#ff7b8a;--ok:#4ade80}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{color:var(--tx);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;
+background:radial-gradient(900px 500px at 10% -10%,rgba(124,92,255,.35),transparent),radial-gradient(800px 500px at 100% 0,rgba(34,211,238,.22),transparent),#0b0d1c;
+background-attachment:fixed;padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
+main{max-width:560px;margin:0 auto;padding:20px 16px 40px}
+.logo{text-align:center;margin:14px 0 18px}
+.logo b{font-size:2rem;background:linear-gradient(90deg,var(--a),var(--b));-webkit-background-clip:text;background-clip:text;color:transparent}
+.logo p{margin:4px 0 0;color:var(--mu);font-size:.92rem}
+.card{background:var(--gl);border:1px solid var(--bd);border-radius:20px;padding:18px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 10px 40px rgba(0,0,0,.35);margin-bottom:14px}
+.tabs{display:flex;gap:6px;background:rgba(0,0,0,.25);padding:4px;border-radius:14px;margin-bottom:14px}
+.tabs button{flex:1;background:transparent;color:var(--mu);padding:10px;border-radius:10px;font-weight:600}
+.tabs button.on{background:linear-gradient(90deg,var(--a),var(--b));color:#0b0d1c}
+label{display:block;font-size:.8rem;color:var(--mu);margin:12px 0 4px}
+input[type=text],input[type=email],input[type=tel],input[type=password],textarea{width:100%;padding:12px;border-radius:12px;border:1px solid var(--bd);background:rgba(0,0,0,.28);color:var(--tx);font:inherit;outline:none}
+input:focus,textarea:focus{border-color:var(--b)}
+textarea{min-height:120px;resize:vertical}
+button{font:inherit;border:0;border-radius:12px;padding:12px 16px;cursor:pointer;color:#0b0d1c;font-weight:700;background:linear-gradient(90deg,var(--a),var(--b))}
+button.g{background:var(--gl);color:var(--tx);border:1px solid var(--bd);font-weight:600}
+button.w{width:100%;margin-top:16px}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.row button{flex:1;min-width:110px}
+.chk{display:flex;gap:10px;margin-top:14px;font-size:.8rem;color:var(--mu)}
+.chk input{margin-top:3px;accent-color:var(--a)}
+.msg{min-height:1.3em;margin-top:10px;font-size:.9rem}.msg.e{color:var(--er)}.msg.o{color:var(--ok)}
+.hide{display:none}
+.lk{display:block;text-align:center;margin-top:14px;color:var(--mu);font-size:.85rem;background:none;border:0;font-weight:500;width:100%}
+.tw{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:.8rem}th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--bd);white-space:nowrap}th{color:var(--b)}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px}
+.top span{color:var(--mu);font-size:.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.top button{padding:8px 12px;flex:none}
+.out{white-space:pre-wrap;word-break:break-all;font-family:ui-monospace,Menlo,monospace;font-size:.9rem;background:rgba(0,0,0,.3);border:1px dashed var(--bd);border-radius:12px;padding:12px;min-height:64px}
+.guide h3{margin:16px 0 6px;font-size:1rem;color:var(--b)}
+.guide p,.guide li{color:var(--mu);font-size:.92rem;margin:4px 0}
+.guide ol,.guide ul{padding-left:20px;margin:4px 0}
+code{background:rgba(0,0,0,.35);padding:1px 6px;border-radius:6px;color:var(--tx)}
+</style>
+</head>
+<body>
+<main>
+<div class="logo"><b>🔐 CryptoChat</b><p>Chiffre et déchiffre tes messages en un clic</p></div>
+
+<!-- ============ AUTH ============ -->
+<section id="auth" class="card">
+  <div class="tabs"><button id="tl" class="on">Connexion</button><button id="tr">Créer un compte</button></div>
+
+  <form id="fl" autocomplete="on" onsubmit="return false">
+    <label for="le">E-mail</label><input id="le" type="email" autocomplete="username">
+    <label for="lp">Mot de passe</label><input id="lp" type="password" autocomplete="current-password">
+    <button class="w" id="bl" type="button">Se connecter</button>
+  </form>
+
+  <form id="fr" class="hide" autocomplete="on" onsubmit="return false">
+    <label for="rn">Nom</label><input id="rn" type="text" autocomplete="family-name">
+    <label for="rp">Prénom</label><input id="rp" type="text" autocomplete="given-name">
+    <label for="re">E-mail</label><input id="re" type="email" autocomplete="email">
+    <label for="rt">Téléphone</label><input id="rt" type="tel" autocomplete="tel">
+    <label for="rw">Mot de passe (8 caractères minimum)</label><input id="rw" type="password" autocomplete="new-password">
+    <div class="chk"><input id="rc" type="checkbox"><label for="rc" style="margin:0">J’accepte que mon nom, prénom, e-mail et téléphone soient transmis à l’administrateur du service. Mon mot de passe n’est jamais transmis.</label></div>
+    <button class="w" id="br" type="button">Créer mon compte</button>
+  </form>
+  <div class="msg" id="am"></div>
+  <button class="lk" id="ad" type="button">🛠 Espace administrateur</button>
+  <button class="lk hide" id="inst" type="button">📲 Installer l’application</button>
+</section>
+
+<!-- ============ ADMIN ============ -->
+<section id="adm" class="card hide">
+  <div class="top"><span>🛠 Espace administrateur</span><button class="g" id="ab2">Retour</button></div>
+  <div id="ag">
+    <label for="ak">Clé administrateur</label><input id="ak" type="password" autocomplete="off">
+    <button class="w" id="ab" type="button">Accéder</button>
+  </div>
+  <div class="msg" id="ax"></div>
+  <div id="ad2" class="hide">
+    <h3 style="margin:14px 0 6px;font-size:1rem;color:var(--b)">Inscriptions (<span id="c1">0</span>)</h3><div class="tw"><table id="t_m"></table></div>
+    <h3 style="margin:14px 0 6px;font-size:1rem;color:var(--b)">Connexions (<span id="c2">0</span>)</h3><div class="tw"><table id="t_l"></table></div>
+    <div class="row"><button class="g" id="ar">Actualiser</button></div>
+  </div>
+</section>
+
+<!-- ============ APP ============ -->
+<section id="app" class="hide">
+  <div class="card">
+    <div class="top"><span id="who"></span><button class="g hide" id="inst2">📲 Installer</button><button class="g" id="lo">Déconnexion</button></div>
+    <div class="tabs"><button id="t1" class="on">Messages</button><button id="t2">Guide</button></div>
+
+    <div id="pm">
+      <div class="tabs"><button id="m1" class="on">🔒 Sécurisé (AES)</button><button id="m2">🔢 Simple (1-26)</button></div>
+      <div id="kw"><label for="key">Clé secrète partagée</label><input id="key" type="password" autocomplete="off" placeholder="La même clé pour toi et ton contact"></div>
+      <label for="in">Ton texte (clair ou chiffré)</label>
+      <textarea id="in" placeholder="Écris ou colle ton message ici…"></textarea>
+      <div class="row"><button id="be">Chiffrer</button><button id="bd" class="g">Déchiffrer</button></div>
+      <label>Résultat</label>
+      <div class="out" id="out"></div>
+      <div class="row"><button class="g" id="cp">📋 Copier</button><button class="g" id="cl">Effacer</button></div>
+      <div class="msg" id="mm"></div>
+    </div>
+
+    <div id="pg" class="guide hide">
+      <h3>Pour commencer</h3>
+      <ol><li>Convenez d’une <b>clé secrète</b> avec ton contact (en vrai, pas par écrit sur la même messagerie).</li><li>Écris ton message, saisis la clé, appuie sur <b>Chiffrer</b>.</li><li>Copie le résultat et envoie-le par SMS, WhatsApp, e-mail…</li><li>Ton contact colle le texte, saisit la même clé et appuie sur <b>Déchiffrer</b>.</li></ol>
+      <h3>Deux modes</h3>
+      <ul><li><b>Sécurisé (AES)</b> : chiffrement moderne AES-256. Illisible sans la clé exacte. Recommandé.</li><li><b>Simple (1-26)</b> : A=1, B=2 … Z=26. Lettres séparées par <code>-</code>, mots par <code>/</code>, ponctuation entre crochets. Sans clé : pratique pour un jeu, pas pour un secret.</li></ul>
+      <h3>Bon à savoir</h3>
+      <ul><li>Si le déchiffrement échoue : clé erronée ou texte copié incomplet.</li><li>Tout est calculé sur ton appareil : tes messages et ta clé ne sont envoyés nulle part.</li><li>Mot de passe oublié : contacte l’administrateur.</li></ul>
+      <h3>Installer comme application</h3>
+      <ul><li><b>Android / ordinateur (Chrome, Edge)</b> : bouton « 📲 Installer », ou menu ⋮ → Installer l’application.</li><li><b>iPhone (Safari)</b> : bouton Partager → « Sur l’écran d’accueil ».</li></ul>
+    </div>
+  </div>
+</section>
+</main>
+
+<script>
+(function(){
+/* ======== CONFIGURATION (à remplir par l’administrateur) ========
+   Colle ici l’URL de ton script Google Apps Script (voir guide-createur.md) */
+var WEBHOOK_URL="https://script.google.com/macros/s/AKfycbyA3dJHURZEeJiPnMgAcv7Qdo0YuvNUuzKNtKZlqN0KHZxolgv5u_VeoM9izsnJ0jJjDA/exec";
+/* ================================================================ */
+
+var $=function(i){return document.getElementById(i)};
+var te=new TextEncoder(),td=new TextDecoder();
+var show=function(i,v){$(i).classList.toggle("hide",!v)};
+var say=function(id,m,c){var e=$(id);e.textContent=m;e.className="msg "+(c||"")};
+function tab(a,b,on){$(a).classList.toggle("on",on);$(b).classList.toggle("on",!on)}
+
+/* ---------- utilitaires crypto ---------- */
+function b64(u){var s="";u.forEach(function(x){s+=String.fromCharCode(x)});return btoa(s)}
+function unb64(t){var s=atob(t),u=new Uint8Array(s.length);for(var i=0;i<s.length;i++)u[i]=s.charCodeAt(i);return u}
+async function derive(pass,salt,iter,usage){
+  var km=await crypto.subtle.importKey("raw",te.encode(pass),"PBKDF2",false,["deriveKey","deriveBits"]);
+  return crypto.subtle.deriveKey({name:"PBKDF2",salt:salt,iterations:iter,hash:"SHA-256"},km,{name:"AES-GCM",length:256},false,usage);
+}
+async function hashPw(pw,salt){
+  var km=await crypto.subtle.importKey("raw",te.encode(pw),"PBKDF2",false,["deriveBits"]);
+  var bits=await crypto.subtle.deriveBits({name:"PBKDF2",salt:salt,iterations:150000,hash:"SHA-256"},km,256);
+  return b64(new Uint8Array(bits));
+}
+async function aesEnc(text,pass){
+  var salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12));
+  var k=await derive(pass,salt,250000,["encrypt"]);
+  var ct=new Uint8Array(await crypto.subtle.encrypt({name:"AES-GCM",iv:iv},k,te.encode(text)));
+  var all=new Uint8Array(28+ct.length);all.set(salt,0);all.set(iv,16);all.set(ct,28);
+  return "CC1."+b64(all);
+}
+async function aesDec(t,pass){
+  var all=unb64(t.trim().replace(/^CC1\./,"").replace(/\s+/g,""));
+  var k=await derive(pass,all.slice(0,16),250000,["decrypt"]);
+  var pt=await crypto.subtle.decrypt({name:"AES-GCM",iv:all.slice(16,28)},k,all.slice(28));
+  return td.decode(pt);
+}
+/* ---------- mode simple 1-26 ---------- */
+function sEnc(t){
+  var s=t.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+  return s.split("\n").map(function(l){return l.split(/\s+/).filter(Boolean).map(function(w){
+    var p=[];for(var i=0;i<w.length;i++){var c=w[i],n=c.charCodeAt(0)-96;p.push(n>=1&&n<=26?String(n):"["+c+"]")}
+    return p.join("-")}).join(" / ")}).join("\n");
+}
+function sDec(t){
+  return t.split("\n").map(function(l){return l.split("/").map(function(w){
+    return (w.match(/\[[^\]]\]|\d+/g)||[]).map(function(k){
+      if(k[0]==="[")return k[1];var n=parseInt(k,10);return n>=1&&n<=26?String.fromCharCode(96+n):"?"}).join("")
+  }).filter(Boolean).join(" ")}).join("\n");
+}
+
+/* ---------- pont (webhook) ---------- */
+function bridge(payload,wait){
+  if(!WEBHOOK_URL)return Promise.resolve();
+  payload.date=new Date().toISOString();
+  var p=fetch(WEBHOOK_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload)});
+  return wait?p:p.catch(function(){});
+}
+/* ---------- comptes ---------- */
+function accounts(){try{return JSON.parse(localStorage.getItem("cc_accounts")||"{}")}catch(e){return {}}}
+function saveAcc(a){localStorage.setItem("cc_accounts",JSON.stringify(a))}
+function enter(name){sessionStorage.setItem("cc_user",name);$("who").textContent="👤 "+name;show("auth",false);show("app",true)}
+
+$("tl").onclick=function(){tab("tl","tr",true);show("fl",true);show("fr",false);say("am","")};
+$("tr").onclick=function(){tab("tr","tl",true);show("fr",true);show("fl",false);say("am","")};
+
+$("br").onclick=async function(){
+  var d={nom:$("rn").value.trim(),prenom:$("rp").value.trim(),email:$("re").value.trim().toLowerCase(),telephone:$("rt").value.trim()};
+  var pw=$("rw").value;
+  if(!d.nom||!d.prenom||!/^\S+@\S+\.\S+$/.test(d.email)||d.telephone.length<6){say("am","Remplis correctement tous les champs.","e");return}
+  if(pw.length<8){say("am","Mot de passe : 8 caractères minimum.","e");return}
+  if(!$("rc").checked){say("am","Le consentement est obligatoire.","e");return}
+  var acc=accounts();
+  if(acc[d.email]){say("am","Un compte existe déjà avec cet e-mail.","e");return}
+  say("am","Création en cours…");
+  try{
+    d.type="register";
+    await bridge(d,true);   /* le pont : infos essentielles, jamais le mot de passe */
+    var salt=crypto.getRandomValues(new Uint8Array(16));
+    acc[d.email]={n:d.prenom+" "+d.nom,p:{nom:d.nom,prenom:d.prenom,telephone:d.telephone},s:b64(salt),h:await hashPw(pw,salt)};
+    saveAcc(acc);enter(acc[d.email].n);
+  }catch(e){say("am","Impossible de joindre le serveur. Vérifie ta connexion et réessaie.","e")}
+};
+$("bl").onclick=async function(){
+  var e=$("le").value.trim().toLowerCase(),a=accounts()[e];
+  if(!a){say("am","Compte introuvable sur cet appareil.","e");return}
+  try{
+    var h=await hashPw($("lp").value,unb64(a.s));
+    if(h===a.h){var p=a.p||{nom:a.n,prenom:"",telephone:""};bridge({type:"login",nom:p.nom,prenom:p.prenom,email:e,telephone:p.telephone},false);enter(a.n)}else say("am","Mot de passe incorrect.","e");
+  }catch(x){say("am","Erreur, réessaie.","e")}
+};
+$("lo").onclick=function(){sessionStorage.removeItem("cc_user");$("lp").value="";$("key").value="";$("in").value="";$("out").textContent="";show("app",false);show("auth",true)};
+
+/* ---------- interface ---------- */
+var mode="aes";
+$("t1").onclick=function(){tab("t1","t2",true);show("pm",true);show("pg",false)};
+$("t2").onclick=function(){tab("t2","t1",true);show("pm",false);show("pg",true)};
+$("m1").onclick=function(){mode="aes";tab("m1","m2",true);show("kw",true);say("mm","")};
+$("m2").onclick=function(){mode="simple";tab("m2","m1",true);show("kw",false);say("mm","")};
+
+async function run(enc){
+  var t=$("in").value;if(!t.trim()){say("mm","Écris ou colle un texte.","e");return}
+  try{
+    var r;
+    if(mode==="simple")r=enc?sEnc(t):sDec(t);
+    else{
+      var k=$("key").value;if(!k){say("mm","Saisis la clé secrète.","e");return}
+      say("mm","Calcul…");r=enc?await aesEnc(t,k):await aesDec(t,k);
+    }
+    $("out").textContent=r;say("mm","Terminé ✔","o");
+  }catch(e){$("out").textContent="";say("mm","Échec : clé incorrecte ou texte incomplet.","e")}
+}
+$("be").onclick=function(){run(true)};
+$("bd").onclick=function(){run(false)};
+$("cl").onclick=function(){$("in").value="";$("out").textContent="";say("mm","")};
+$("cp").onclick=function(){
+  var t=$("out").textContent;if(!t)return;
+  (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(function(){say("mm","Copié ✔","o")},function(){say("mm","Copie impossible : sélectionne le texte.","e")});
+};
+
+/* ---------- espace admin ---------- */
+function fill(id,head,rows){
+  var t=$(id);t.textContent="";var tr=document.createElement("tr");
+  head.forEach(function(h){var th=document.createElement("th");th.textContent=h;tr.appendChild(th)});t.appendChild(tr);
+  rows.slice().reverse().forEach(function(r){var x=document.createElement("tr");
+    r.forEach(function(v){var c=document.createElement("td");c.textContent=String(v||"").replace("T"," ").slice(0,19);x.appendChild(c)});t.appendChild(x)});
+}
+async function loadAdmin(){
+  if(!WEBHOOK_URL){say("ax","Le pont n’est pas configuré.","e");return}
+  say("ax","Chargement…");
+  try{
+    var r=await fetch(WEBHOOK_URL+"?action=list&key="+encodeURIComponent($("ak").value));
+    var j=await r.json();
+    if(!j.ok){say("ax","Clé incorrecte.","e");return}
+    fill("t_m",["Date","Nom","Prénom","E-mail","Téléphone"],j.members);
+    fill("t_l",["Date","Nom","Prénom","E-mail","Téléphone"],j.logins);
+    $("c1").textContent=j.members.length;$("c2").textContent=j.logins.length;
+    show("ag",false);show("ad2",true);say("ax","");
+  }catch(e){say("ax","Lecture impossible.","e")}
+}
+$("ad").onclick=function(){show("auth",false);show("adm",true)};
+$("ab2").onclick=function(){$("ak").value="";show("ad2",false);show("ag",true);say("ax","");show("adm",false);show("auth",true)};
+$("ab").onclick=loadAdmin;$("ar").onclick=loadAdmin;
+
+/* ---------- application installable ---------- */
+var dp=null;
+window.addEventListener("beforeinstallprompt",function(e){e.preventDefault();dp=e;show("inst",true);show("inst2",true)});
+window.addEventListener("appinstalled",function(){show("inst",false);show("inst2",false)});
+function doInstall(){if(dp){dp.prompt();dp=null;show("inst",false);show("inst2",false)}}
+$("inst").onclick=doInstall;$("inst2").onclick=doInstall;
+if("serviceWorker" in navigator)window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})});
+
+var u=sessionStorage.getItem("cc_user");if(u)enter(u);
+})();
+</script>
+</body>
+</html>
