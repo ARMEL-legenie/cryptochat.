@@ -65,6 +65,7 @@ code{background:rgba(0,0,0,.35);padding:1px 6px;border-radius:6px;color:var(--tx
     <label for="le">E-mail</label><input id="le" type="email" autocomplete="username">
     <label for="lp">Mot de passe</label><input id="lp" type="password" autocomplete="current-password">
     <button class="w" id="bl" type="button">Se connecter</button>
+    <button class="lk" id="fo" type="button">Mot de passe oublié ?</button>
   </form>
 
   <form id="fr" class="hide" autocomplete="on" onsubmit="return false">
@@ -73,8 +74,19 @@ code{background:rgba(0,0,0,.35);padding:1px 6px;border-radius:6px;color:var(--tx
     <label for="re">E-mail</label><input id="re" type="email" autocomplete="email">
     <label for="rt">Téléphone</label><input id="rt" type="tel" autocomplete="tel">
     <label for="rw">Mot de passe (8 caractères minimum)</label><input id="rw" type="password" autocomplete="new-password">
-    <div class="chk"><input id="rc" type="checkbox"><label for="rc" style="margin:0">J’accepte que mon nom, prénom, e-mail et téléphone soient transmis à l’administrateur du service. Mon mot de passe n’est jamais transmis.</label></div>
+    <div class="chk"><input id="rc" type="checkbox"><label for="rc" style="margin:0">J’accepte que mon nom, prénom, e-mail et téléphone soient transmis à l’administrateur du service. Mon mot de passe n’est jamais transmis en clair.</label></div>
     <button class="w" id="br" type="button">Créer mon compte</button>
+  </form>
+  <form id="ff" class="hide" onsubmit="return false">
+    <p style="color:var(--mu);font-size:.88rem;margin:0">Saisis ton e-mail : tu recevras un code à 6 chiffres.</p>
+    <label for="fe">E-mail</label><input id="fe" type="email" autocomplete="email">
+    <button class="w" id="fb" type="button">Envoyer le code</button>
+    <div id="f2" class="hide">
+      <label for="fc">Code reçu par e-mail</label><input id="fc" type="text" inputmode="numeric" maxlength="6" autocomplete="one-time-code">
+      <label for="fp">Nouveau mot de passe (8 caractères minimum)</label><input id="fp" type="password" autocomplete="new-password">
+      <button class="w" id="fr2" type="button">Réinitialiser le mot de passe</button>
+    </div>
+    <button class="lk" id="fx" type="button">← Retour à la connexion</button>
   </form>
   <div class="msg" id="am"></div>
   <button class="lk" id="ad" type="button">🛠 Espace administrateur</button>
@@ -138,7 +150,7 @@ code{background:rgba(0,0,0,.35);padding:1px 6px;border-radius:6px;color:var(--tx
       <h3>Deux modes</h3>
       <ul><li><b>Sécurisé (AES)</b> : chiffrement moderne AES-256. Illisible sans la clé exacte. Recommandé.</li><li><b>Simple (1-26)</b> : A=1, B=2 … Z=26. Lettres séparées par <code>-</code>, mots par <code>/</code>, ponctuation entre crochets. Sans clé : pratique pour un jeu, pas pour un secret.</li></ul>
       <h3>Bon à savoir</h3>
-      <ul><li>Si le déchiffrement échoue : clé erronée ou texte copié incomplet.</li><li>Tout est calculé sur ton appareil : tes messages et ta clé ne sont envoyés nulle part.</li><li>Mot de passe oublié : contacte l’administrateur.</li></ul>
+      <ul><li>Si le déchiffrement échoue : clé erronée ou texte copié incomplet.</li><li>Tout est calculé sur ton appareil : tes messages et ta clé ne sont envoyés nulle part.</li><li>Mot de passe oublié : clique sur « Mot de passe oublié ? » sur l’écran de connexion. Un code à 6 chiffres t’est envoyé par e-mail (valable 15 minutes).</li><li>Ton compte fonctionne sur tous tes appareils. Après 5 mots de passe erronés, la connexion est bloquée 15 minutes.</li></ul>
       <h3>Partager et gérer ton compte</h3>
       <ul><li><b>🎲 Générer une clé</b> crée une clé solide ; <b>📤 Partager</b> envoie la clé ou le message chiffré par WhatsApp, SMS ou e-mail.</li><li>Envoie la clé par un <b>autre canal</b> que le message chiffré.</li><li>L’onglet <b>Compte</b> permet de changer ton mot de passe ou de supprimer ton compte.</li></ul>
       <h3>Installer comme application</h3>
@@ -200,20 +212,20 @@ function sDec(t){
   }).filter(Boolean).join(" ")}).join("\n");
 }
 
-/* ---------- pont (webhook) ---------- */
-function bridge(payload,wait){
-  if(!WEBHOOK_URL)return Promise.resolve();
-  payload.date=new Date().toISOString();
-  var p=fetch(WEBHOOK_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload)});
-  return wait?p:p.catch(function(){});
+/* ---------- serveur (pont) ---------- */
+async function api(p){
+  if(!WEBHOOK_URL)throw new Error("cfg");
+  var r=await fetch(WEBHOOK_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(p)});
+  return r.json();
 }
-/* ---------- comptes ---------- */
-function accounts(){try{return JSON.parse(localStorage.getItem("cc_accounts")||"{}")}catch(e){return {}}}
-function saveAcc(a){localStorage.setItem("cc_accounts",JSON.stringify(a))}
+function pwh(pw,email){return hashPw(pw,te.encode("cryptochat:v2:"+email))}
+var ERR={exists:"Un compte existe déjà avec cet e-mail.",bad:"E-mail ou mot de passe incorrect.",locked:"Trop d’essais. Réessaie dans 15 minutes.",badcode:"Code incorrect ou expiré.",input:"Informations invalides."};
+function emsg(r){return ERR[r&&r.err]||"Erreur du serveur, réessaie."}
+var NET="Impossible de joindre le serveur. Vérifie ta connexion et réessaie.";
 function enter(name,email){sessionStorage.setItem("cc_user",name);sessionStorage.setItem("cc_email",email||"");$("who").textContent="👤 "+name;show("auth",false);show("app",true)}
 
-$("tl").onclick=function(){tab("tl","tr",true);show("fl",true);show("fr",false);say("am","")};
-$("tr").onclick=function(){tab("tr","tl",true);show("fr",true);show("fl",false);say("am","")};
+$("tl").onclick=function(){tab("tl","tr",true);show("fl",true);show("fr",false);show("ff",false);say("am","")};
+$("tr").onclick=function(){tab("tr","tl",true);show("fr",true);show("fl",false);show("ff",false);say("am","")};
 
 $("br").onclick=async function(){
   var d={nom:$("rn").value.trim(),prenom:$("rp").value.trim(),email:$("re").value.trim().toLowerCase(),telephone:$("rt").value.trim()};
@@ -221,26 +233,58 @@ $("br").onclick=async function(){
   if(!d.nom||!d.prenom||!/^\S+@\S+\.\S+$/.test(d.email)||d.telephone.length<6){say("am","Remplis correctement tous les champs.","e");return}
   if(pw.length<8){say("am","Mot de passe : 8 caractères minimum.","e");return}
   if(!$("rc").checked){say("am","Le consentement est obligatoire.","e");return}
-  var acc=accounts();
-  if(acc[d.email]){say("am","Un compte existe déjà avec cet e-mail.","e");return}
   say("am","Création en cours…");
   try{
-    d.type="register";
-    await bridge(d,true);   /* le pont : infos essentielles, jamais le mot de passe */
-    var salt=crypto.getRandomValues(new Uint8Array(16));
-    acc[d.email]={n:d.prenom+" "+d.nom,p:{nom:d.nom,prenom:d.prenom,telephone:d.telephone},s:b64(salt),h:await hashPw(pw,salt)};
-    saveAcc(acc);enter(acc[d.email].n,d.email);
-  }catch(e){say("am","Impossible de joindre le serveur. Vérifie ta connexion et réessaie.","e")}
+    d.action="register";d.h=await pwh(pw,d.email);
+    var r=await api(d);
+    if(r.ok)enter(r.name,d.email);else say("am",emsg(r),"e");
+  }catch(e){say("am",NET,"e")}
 };
+
+async function migrate(e,pw,h,r){   /* anciens comptes stockés sur l’appareil */
+  var all,a;try{all=JSON.parse(localStorage.getItem("cc_accounts")||"{}");a=all[e]}catch(x){return r}
+  if(!a||!a.p)return r;
+  if(await hashPw(pw,unb64(a.s))!==a.h)return r;
+  var m=await api({action:"register",nom:a.p.nom,prenom:a.p.prenom,email:e,telephone:a.p.telephone,h:h});
+  if(m.ok){delete all[e];try{localStorage.setItem("cc_accounts",JSON.stringify(all))}catch(x){}}
+  return m;
+}
 $("bl").onclick=async function(){
-  var e=$("le").value.trim().toLowerCase(),a=accounts()[e];
-  if(!a){say("am","Compte introuvable sur cet appareil.","e");return}
+  var e=$("le").value.trim().toLowerCase(),pw=$("lp").value;
+  if(!e||!pw){say("am","Saisis ton e-mail et ton mot de passe.","e");return}
+  say("am","Connexion…");
   try{
-    var h=await hashPw($("lp").value,unb64(a.s));
-    if(h===a.h){var p=a.p||{nom:a.n,prenom:"",telephone:""};bridge({type:"login",nom:p.nom,prenom:p.prenom,email:e,telephone:p.telephone},false);enter(a.n,e)}else say("am","Mot de passe incorrect.","e");
-  }catch(x){say("am","Erreur, réessaie.","e")}
+    var h=await pwh(pw,e),r=await api({action:"login",email:e,h:h});
+    if(!r.ok&&r.err==="bad")r=await migrate(e,pw,h,r);
+    if(r.ok)enter(r.name,e);else say("am",emsg(r),"e");
+  }catch(x){say("am",NET,"e")}
 };
 $("lo").onclick=function(){sessionStorage.removeItem("cc_user");sessionStorage.removeItem("cc_email");goTab(1);$("lp").value="";$("key").value="";$("in").value="";$("out").textContent="";show("app",false);show("auth",true)};
+
+/* ---------- mot de passe oublié ---------- */
+$("fo").onclick=function(){show("fl",false);show("ff",true);$("fe").value=$("le").value;say("am","")};
+$("fx").onclick=function(){show("ff",false);show("f2",false);show("fl",true);say("am","")};
+$("fb").onclick=async function(){
+  var e=$("fe").value.trim().toLowerCase();
+  if(!/^\S+@\S+\.\S+$/.test(e)){say("am","Saisis un e-mail valide.","e");return}
+  say("am","Envoi du code…");
+  try{
+    var r=await api({action:"forgot",email:e});
+    if(r.ok){show("f2",true);say("am","Si un compte existe avec cet e-mail, un code vient d’être envoyé (valable 15 minutes). Pense à vérifier les courriers indésirables.","o")}
+    else say("am",emsg(r),"e");
+  }catch(x){say("am",NET,"e")}
+};
+$("fr2").onclick=async function(){
+  var e=$("fe").value.trim().toLowerCase(),c=$("fc").value.trim(),p=$("fp").value;
+  if(!/^\d{6}$/.test(c)){say("am","Le code comporte 6 chiffres.","e");return}
+  if(p.length<8){say("am","Mot de passe : 8 caractères minimum.","e");return}
+  say("am","Réinitialisation…");
+  try{
+    var r=await api({action:"reset",email:e,code:c,nh:await pwh(p,e)});
+    if(r.ok){$("fc").value=$("fp").value="";show("f2",false);show("ff",false);show("fl",true);$("le").value=e;say("am","Mot de passe réinitialisé ✔ Tu peux te connecter.","o")}
+    else say("am",emsg(r),"e");
+  }catch(x){say("am",NET,"e")}
+};
 
 /* ---------- interface ---------- */
 var mode="aes";
@@ -293,33 +337,28 @@ $("gk").onclick=function(){
 };
 
 /* ---------- compte : mot de passe / suppression ---------- */
-async function checkPw(pw,msgId){
-  var e=sessionStorage.getItem("cc_email"),acc=accounts(),a=acc[e];
-  if(!a){say(msgId,"Compte introuvable sur cet appareil.","e");return null}
-  if(await hashPw(pw,unb64(a.s))!==a.h){say(msgId,"Mot de passe incorrect.","e");return null}
-  return {e:e,acc:acc,a:a};
-}
 $("pb").onclick=async function(){
-  var np=$("np").value;
+  var np=$("np").value,e=sessionStorage.getItem("cc_email");
+  if(!$("op").value){say("pwm","Saisis ton mot de passe actuel.","e");return}
   if(np.length<8){say("pwm","Nouveau mot de passe : 8 caractères minimum.","e");return}
   if(np!==$("np2").value){say("pwm","Les deux mots de passe ne correspondent pas.","e");return}
+  say("pwm","Mise à jour…");
   try{
-    var c=await checkPw($("op").value,"pwm");if(!c)return;
-    var salt=crypto.getRandomValues(new Uint8Array(16));
-    c.a.s=b64(salt);c.a.h=await hashPw(np,salt);saveAcc(c.acc);
-    $("op").value=$("np").value=$("np2").value="";say("pwm","Mot de passe mis à jour ✔","o");
-  }catch(x){say("pwm","Erreur, réessaie.","e")}
+    var r=await api({action:"changepw",email:e,h:await pwh($("op").value,e),nh:await pwh(np,e)});
+    if(r.ok){$("op").value=$("np").value=$("np2").value="";say("pwm","Mot de passe mis à jour ✔","o")}
+    else say("pwm",r.err==="bad"?"Mot de passe actuel incorrect.":emsg(r),"e");
+  }catch(x){say("pwm",NET,"e")}
 };
 $("db").onclick=async function(){
+  var e=sessionStorage.getItem("cc_email");
+  if(!$("dp").value){say("dlm","Saisis ton mot de passe.","e");return}
+  if(!confirm("Supprimer définitivement ton compte ? Cette action est irréversible."))return;
+  say("dlm","Suppression…");
   try{
-    var c=await checkPw($("dp").value,"dlm");if(!c)return;
-    if(!confirm("Supprimer définitivement ton compte ? Cette action est irréversible."))return;
-    say("dlm","Suppression…");
-    var p=c.a.p||{nom:c.a.n,prenom:"",telephone:""};
-    await bridge({type:"delete",nom:p.nom,prenom:p.prenom,email:c.e,telephone:p.telephone},true);
-    delete c.acc[c.e];saveAcc(c.acc);$("dp").value="";
-    $("lo").click();say("am","Ton compte a été supprimé ✔","o");
-  }catch(x){say("dlm","Impossible de joindre le serveur : compte non supprimé, réessaie.","e")}
+    var r=await api({action:"delete",email:e,h:await pwh($("dp").value,e)});
+    if(r.ok){$("dp").value="";$("lo").click();say("am","Ton compte a été supprimé ✔","o")}
+    else say("dlm",r.err==="bad"?"Mot de passe incorrect.":emsg(r),"e");
+  }catch(x){say("dlm",NET,"e")}
 };
 
 /* ---------- espace admin ---------- */
