@@ -41,6 +41,13 @@ button.w{width:100%;margin-top:16px}
 a.b{display:block;flex:1;min-width:110px;text-align:center;text-decoration:none;padding:12px 16px;border-radius:12px;background:var(--gl);border:1px solid var(--bd);color:var(--tx);font-weight:600}
 button.dg{background:linear-gradient(90deg,#ff5d73,#ff8f6b);color:#fff}
 .sep{border:0;border-top:1px solid var(--bd);margin:18px 0}
+#ld{position:fixed;inset:0;z-index:99;display:flex;align-items:center;justify-content:center;background:rgba(5,6,16,.72);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}
+#ld.hide{display:none}
+.ldb{background:#171a33;border:1px solid var(--bd);border-radius:20px;padding:26px 30px;text-align:center;width:min(86vw,320px);box-shadow:0 14px 50px rgba(0,0,0,.5)}
+.sp{width:44px;height:44px;margin:0 auto 14px;border-radius:50%;border:4px solid rgba(255,255,255,.14);border-top-color:var(--b);animation:rot .8s linear infinite}
+.bar{height:5px;background:rgba(255,255,255,.1);border-radius:5px;overflow:hidden;margin-top:16px}
+.bar i{display:block;height:100%;width:40%;border-radius:5px;background:linear-gradient(90deg,var(--a),var(--b));animation:mv 1.2s ease-in-out infinite}
+@keyframes rot{to{transform:rotate(360deg)}}@keyframes mv{0%{margin-left:-40%}100%{margin-left:100%}}
 .lk{display:block;text-align:center;margin-top:14px;color:var(--mu);font-size:.85rem;background:none;border:0;font-weight:500;width:100%}
 .tw{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:.8rem}th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--bd);white-space:nowrap}th{color:var(--b)}
 .top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px}
@@ -102,6 +109,14 @@ code{background:rgba(0,0,0,.35);padding:1px 6px;border-radius:6px;color:var(--tx
   </div>
   <div class="msg" id="ax"></div>
   <div id="ad2" class="hide">
+    <div class="row" style="margin-top:0"><button id="rs" type="button">📊 Résumé</button></div>
+    <div id="rsm" class="hide">
+      <h3 style="margin:14px 0 6px;font-size:1rem;color:var(--b)">Activité</h3><div class="tw"><table id="t_s"></table></div>
+      <p id="rst" style="color:var(--mu);font-size:.85rem;margin:8px 0 0"></p>
+      <h3 style="margin:14px 0 6px;font-size:1rem;color:var(--b)">Nouveaux inscrits (7 jours)</h3><div class="tw"><table id="t_n"></table></div>
+      <h3 style="margin:14px 0 6px;font-size:1rem;color:var(--b)">Comptes supprimés (7 jours)</h3><div class="tw"><table id="t_x"></table></div>
+      <hr class="sep">
+    </div>
     <h3 style="margin:14px 0 6px;font-size:1rem;color:var(--b)">Inscriptions (<span id="c1">0</span>)</h3><div class="tw"><table id="t_m"></table></div>
     <h3 style="margin:14px 0 6px;font-size:1rem;color:var(--b)">Connexions (<span id="c2">0</span>)</h3><div class="tw"><table id="t_l"></table></div>
     <h3 style="margin:14px 0 6px;font-size:1rem;color:var(--b)">Suppressions (<span id="c3">0</span>)</h3><div class="tw"><table id="t_d"></table></div>
@@ -160,6 +175,7 @@ code{background:rgba(0,0,0,.35);padding:1px 6px;border-radius:6px;color:var(--tx
 </section>
 </main>
 
+<div id="ld" class="hide" role="status" aria-live="polite"><div class="ldb"><div class="sp"></div><b id="ldt">Chargement…</b><div class="bar"><i></i></div></div></div>
 <script>
 (function(){
 /* ======== CONFIGURATION (à remplir par l’administrateur) ========
@@ -362,12 +378,38 @@ $("db").onclick=async function(){
 };
 
 /* ---------- espace admin ---------- */
-function fill(id,head,rows){
+function fmt(v){
+  var t=String(v==null?"":v);
+  if(/^\d{4}-\d{2}-\d{2}T/.test(t)){var d=new Date(t);if(!isNaN(d))return d.toLocaleString("fr-FR",{dateStyle:"short",timeStyle:"short"})}
+  return t;
+}
+function fill(id,head,rows,keep){
   var t=$(id);t.textContent="";var tr=document.createElement("tr");
   head.forEach(function(h){var th=document.createElement("th");th.textContent=h;tr.appendChild(th)});t.appendChild(tr);
-  rows.slice().reverse().forEach(function(r){var x=document.createElement("tr");
-    r.forEach(function(v){var c=document.createElement("td");c.textContent=String(v||"").replace("T"," ").slice(0,19);x.appendChild(c)});t.appendChild(x)});
+  (keep?rows:rows.slice().reverse()).forEach(function(r){var x=document.createElement("tr");
+    r.forEach(function(v){var c=document.createElement("td");c.textContent=fmt(v);x.appendChild(c)});t.appendChild(x)});
 }
+var adminData=null;
+function renderSummary(){
+  var j=adminData;if(!j)return;
+  var now=Date.now(),P=[864e5,7*864e5,30*864e5];
+  function inP(r,ms){var t=Date.parse(r[0]);return !isNaN(t)&&now-t<=ms}
+  function cnt(a,ms){return a.filter(function(r){return inP(r,ms)}).length}
+  function uniq(a,ms){var u={};a.forEach(function(r){if(inP(r,ms))u[String(r[3]).toLowerCase()]=1});return Object.keys(u).length}
+  var rows=[
+    ["Nouveaux comptes"].concat(P.map(function(m){return cnt(j.members,m)})),
+    ["Connexions"].concat(P.map(function(m){return cnt(j.logins,m)})),
+    ["Utilisateurs actifs"].concat(P.map(function(m){return uniq(j.logins,m)})),
+    ["Comptes supprimés"].concat(P.map(function(m){return cnt(j.deletions,m)}))
+  ];
+  fill("t_s",["","24 h","7 jours","30 jours"],rows,true);
+  var last=j.logins.length?j.logins[j.logins.length-1]:null;
+  $("rst").textContent="Comptes actuels : "+j.members.length+(last?" · Dernière connexion : "+fmt(last[0])+" ("+last[2]+" "+last[1]+")":"");
+  var H=["Date","Nom","Prénom","E-mail","Téléphone"];
+  fill("t_n",H,j.members.filter(function(r){return inP(r,P[1])}));
+  fill("t_x",H,j.deletions.filter(function(r){return inP(r,P[1])}));
+}
+$("rs").onclick=function(){var o=$("rsm").classList.contains("hide");show("rsm",o);if(o)renderSummary()};
 async function loadAdmin(){
   if(!WEBHOOK_URL){say("ax","Le pont n’est pas configuré.","e");return}
   say("ax","Chargement…");
@@ -375,6 +417,7 @@ async function loadAdmin(){
     var r=await fetch(WEBHOOK_URL+"?action=list&key="+encodeURIComponent($("ak").value));
     var j=await r.json();
     if(!j.ok){say("ax","Clé incorrecte.","e");return}
+    adminData=j;if(!$("rsm").classList.contains("hide"))renderSummary();
     fill("t_m",["Date","Nom","Prénom","E-mail","Téléphone"],j.members);
     fill("t_l",["Date","Nom","Prénom","E-mail","Téléphone"],j.logins);
     fill("t_d",["Date","Nom","Prénom","E-mail","Téléphone"],j.deletions||[]);$("c3").textContent=(j.deletions||[]).length;
@@ -393,6 +436,27 @@ window.addEventListener("appinstalled",function(){show("inst",false);show("inst2
 function doInstall(){if(dp){dp.prompt();dp=null;show("inst",false);show("inst2",false)}}
 $("inst").onclick=doInstall;$("inst2").onclick=doInstall;
 if("serviceWorker" in navigator)window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})});
+
+/* ---------- indicateur de chargement ---------- */
+var ldTimer=null,ldSlow=null;
+function busy(msg){
+  clearTimeout(ldTimer);clearTimeout(ldSlow);
+  ldTimer=setTimeout(function(){$("ldt").textContent=msg;show("ld",true);
+    ldSlow=setTimeout(function(){$("ldt").textContent="Encore un instant, le serveur répond…"},4000)},150);
+  return function(){clearTimeout(ldTimer);clearTimeout(ldSlow);show("ld",false)};
+}
+[["br","Création de ton compte…"],["bl","Connexion en cours…"],["fb","Envoi du code par e-mail…"],["fr2","Réinitialisation du mot de passe…"],["pb","Mise à jour du mot de passe…"],["db","Suppression du compte…"],["ab","Chargement des données…"],["ar","Actualisation…"]].forEach(function(x){
+  var b=$(x[0]),f=b.onclick;
+  b.onclick=async function(){var done=busy(x[1]);try{await f.call(b)}finally{done()}};
+});
+
+/* ---------- réveil du serveur (connexions plus rapides) ---------- */
+var lastPing=0;
+function ping(){
+  if(!WEBHOOK_URL||Date.now()-lastPing<60000)return;
+  lastPing=Date.now();fetch(WEBHOOK_URL+"?action=ping",{cache:"no-store"}).catch(function(){});
+}
+document.addEventListener("focusin",ping);ping();
 
 var u=sessionStorage.getItem("cc_user");if(u)enter(u,sessionStorage.getItem("cc_email"));
 })();
